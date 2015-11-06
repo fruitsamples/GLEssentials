@@ -1,7 +1,7 @@
 /*
      File: character.fsh
  Abstract: The fragment shader for character rendering.
-  Version: 1.0
+  Version: 1.1
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -49,11 +49,21 @@
 precision highp float;
 #endif
 
+#if __VERSION__ >= 140
+in vec2      varTexcoord;
+out vec4     fragColor;
+#else
 varying vec2 varTexcoord;
+#endif
+
 uniform sampler2D diffuseTexture;
 
 
 void main (void)
 {
-    gl_FragColor = vec4(texture2D(diffuseTexture, varTexcoord.st, 0.0));
+	#if __VERSION__ >= 140
+	fragColor = texture(diffuseTexture, varTexcoord.st, 0.0);
+	#else
+    gl_FragColor = texture2D(diffuseTexture, varTexcoord.st, 0.0);
+	#endif
 }

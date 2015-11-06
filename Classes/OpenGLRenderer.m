@@ -1,7 +1,7 @@
 /*
      File: OpenGLRenderer.m
  Abstract: The OpenGLRenderer class creates and draws the shaders.
-  Version: 1.0
+  Version: 1.1
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -84,8 +84,7 @@ enum {
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-@interface OpenGLRenderer (PrivateMethods)
-
+@implementation OpenGLRenderer
 
 GLuint _defaultFBOName;
 
@@ -103,7 +102,7 @@ GLuint _reflectHeight;
 GLuint _reflectPrgName;
 GLint  _reflectModelViewUniformIdx;
 GLint  _reflectProjectionUniformIdx;
-GLuint _reflectNormalMatrixUniformIdx;
+GLint _reflectNormalMatrixUniformIdx;
 #endif // RENDER_REFLECTION
 
 
@@ -124,11 +123,6 @@ GLuint _viewHeight;
 
 GLboolean _useVBOs;
 
-@end
-
-@implementation OpenGLRenderer
-
-
 - (void) resizeWithWidth:(GLuint)width AndHeight:(GLuint)height
 {
 	glViewport(0, 0, width, height);
@@ -145,9 +139,6 @@ GLboolean _useVBOs;
 	GLfloat projection[16];
 	GLfloat mvp[16];
 	
-	
-	
-	
 #if RENDER_REFLECTION
 	
 	// Bind our refletion FBO and render our scene
@@ -161,8 +152,7 @@ GLboolean _useVBOs;
 	mtxLoadPerspective(projection, 90, (float)_reflectWidth / (float)_reflectHeight,5.0,10000);
 
 	mtxLoadIdentity(modelView);
-
-
+	
 	// Invert Y so that everything is rendered up-side-down
 	// as it should with a reflection
 	
@@ -170,7 +160,7 @@ GLboolean _useVBOs;
 	mtxTranslateApply(modelView, 0, 300, -800);
 	mtxRotateXApply(modelView, -90.0f);	
 	mtxRotateApply(modelView, _characterAngle, 0.7, 0.3, 1);	
-
+	
 	mtxMultiply(mvp, projection, modelView);
 	
 	// Use the program that we previously created
@@ -189,7 +179,6 @@ GLboolean _useVBOs;
 	// Cull front faces now that everything is flipped 
 	// with our inverted reflection transformation matrix
 	glCullFace(GL_FRONT);
-
 	
 	// Draw our object
 	if(_useVBOs)
@@ -201,22 +190,21 @@ GLboolean _useVBOs;
 		glDrawElements(GL_TRIANGLES, _characterNumElements, _characterElementType, _characterModel->elements);
 	}
 	
-	// Bind our default FBO to render to the screene
+	// Bind our default FBO to render to the screen
 	glBindFramebuffer(GL_FRAMEBUFFER, _defaultFBOName);
 
 	glViewport(0, 0, _viewWidth, _viewHeight);
+	
 #endif // RENDER_REFLECTION
 	
-	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
 	
 	// Use the program for rendering our character
 	glUseProgram(_characterPrgName);
 	
 	// Calculate the projection matrix
 	mtxLoadPerspective(projection, 90, (float)_viewWidth / (float)_viewHeight,5.0,10000);
-
+	
 	// Calculate the modelview matrix to render our character 
 	//  at the proper position and rotation
 	mtxLoadTranslate(modelView, 0, 150, -450);
@@ -226,11 +214,9 @@ GLboolean _useVBOs;
 	// Multiply the modelview and projection matrix and set it in the shader
 	mtxMultiply(mvp, projection, modelView);
 	
-
 	// Have our shader use the modelview projection matrix 
 	// that we calculated above
 	glUniformMatrix4fv(_characterMvpUniformIdx, 1, GL_FALSE, mvp);
-	
 	
 	// Bind the texture to be used
 	glBindTexture(GL_TEXTURE_2D, _characterTexName);
@@ -314,8 +300,6 @@ GLboolean _useVBOs;
 	_characterAngle++;
 }
 
-
-
 static GLsizei GetGLTypeSize(GLenum type)
 {
 	switch (type) {
@@ -335,7 +319,6 @@ static GLsizei GetGLTypeSize(GLenum type)
 			return sizeof(GLfloat);
 	}
 	return 0;
-	
 }
 
 - (GLuint) buildVAO:(demoModel*)model
@@ -439,8 +422,7 @@ static GLsizei GetGLTypeSize(GLenum type)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferName);
 		
 		// Allocate and load vertex array element data into VBO
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->elementArraySize, model->elements, GL_STATIC_DRAW);
-	
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->elementArraySize, model->elements, GL_STATIC_DRAW);	
 	}
 	else
 	{
@@ -498,8 +480,6 @@ static GLsizei GetGLTypeSize(GLenum type)
 								  model->texcoordSize*texcoordTypeSize,  // What is the stride (i.e. bytes between texcoords)?
 								  model->texcoords);	// Where is the texcood data in memory?
 		}
-		
-		
 	}
 	
 	GetGLError();
@@ -635,7 +615,7 @@ static GLsizei GetGLTypeSize(GLenum type)
     for(colorAttachment = 0; colorAttachment < maxColorAttachments; colorAttachment++)
     {
 		// Delete the attachment
-		deleteFBOAttachment:(GL_COLOR_ATTACHMENT0+colorAttachment);
+		[self deleteFBOAttachment:(GL_COLOR_ATTACHMENT0+colorAttachment)];
 	}
 	
 	// Delete any depth or stencil buffer attached
@@ -695,19 +675,39 @@ static GLsizei GetGLTypeSize(GLenum type)
 	GetGLError();
 	
 	return fboName;
-	
 }
 
-
-
-
-
 -(GLuint) buildProgramWithVertexSource:(demoSource*) vertexSource withFragmentSource: (demoSource*)fragmentSource 
-							 withNormal:(BOOL)hasNormal withTexcoord:(BOOL)hasTexcoord
+							withNormal:(BOOL)hasNormal withTexcoord:(BOOL)hasTexcoord
 {
 	GLuint prgName;
 	
 	GLint logLength, status;
+	
+	// String to pass to glShaderSource
+	GLchar* sourceString = NULL;  
+	
+	// Determine if GLSL version 140 is supported by this context.
+	//  We'll use this info to generate a GLSL shader source string  
+	//  with the proper version preprocessor string prepended
+	float  glLanguageVersion;
+	
+#if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+	sscanf((char *)glGetString(GL_SHADING_LANGUAGE_VERSION), "OpenGL ES GLSL ES %f", &glLanguageVersion);
+#else
+	sscanf((char *)glGetString(GL_SHADING_LANGUAGE_VERSION), "%f", &glLanguageVersion);	
+#endif
+	
+	// GL_SHADING_LANGUAGE_VERSION returns the version standard version form 
+	//  with decimals, but the GLSL version preprocessor directive simply
+	//  uses integers (thus 1.10 should 110 and 1.40 should be 140, etc.)
+	//  We multiply the floating point number by 100 to get a proper
+	//  number for the GLSL preprocessor directive
+	GLuint version = 100 * glLanguageVersion;
+	
+	// Get the size of the version preprocessor string info so we know 
+	//  how much memory to allocate for our sourceString
+	const GLsizei versionStringSize = sizeof("#version 123\n");
 	
 	// Create a program object
 	prgName = glCreateProgram();
@@ -731,11 +731,18 @@ static GLsizei GetGLTypeSize(GLenum type)
 	// Specify and compile VertexShader //
 	//////////////////////////////////////
 	
-
+	// Allocate memory for the source string including the version preprocessor information
+	sourceString = malloc(vertexSource->byteSize + versionStringSize);
+	
+	// Prepend our vertex shader source string with the supported GLSL version so
+	//  the shader will work on ES, Legacy, and OpenGL 3.2 Core Profile contexts
+	sprintf(sourceString, "#version %d\n%s", version, vertexSource->string);
+			
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);	
-	glShaderSource(vertexShader, 1, (const GLchar **)&(vertexSource->string), NULL);
+	glShaderSource(vertexShader, 1, (const GLchar **)&(sourceString), NULL);
 	glCompileShader(vertexShader);
 	glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &logLength);
+	
 	if (logLength > 0) 
 	{
 		GLchar *log = (GLchar*) malloc(logLength);
@@ -744,13 +751,15 @@ static GLsizei GetGLTypeSize(GLenum type)
 		free(log);
 	}
 	
-	
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
 	if (status == 0)
 	{
-		NSLog(@"Failed to compile vtx shader:\n%s\n", vertexSource->string);
+		NSLog(@"Failed to compile vtx shader:\n%s\n", sourceString);
 		return 0;
 	}
+	
+	free(sourceString);
+	sourceString = NULL;
 	
 	// Attach the vertex shader to our program
 	glAttachShader(prgName, vertexShader);
@@ -760,8 +769,15 @@ static GLsizei GetGLTypeSize(GLenum type)
 	// Specify and compile Fragment Shader //
 	/////////////////////////////////////////
 	
+	// Allocate memory for the source string including the version preprocessor	 information
+	sourceString = malloc(fragmentSource->byteSize + versionStringSize);
+	
+	// Prepend our fragment shader source string with the supported GLSL version so
+	//  the shader will work on ES, Legacy, and OpenGL 3.2 Core Profile contexts
+	sprintf(sourceString, "#version %d\n%s", version, fragmentSource->string);
+	
 	GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);	
-	glShaderSource(fragShader, 1, (const GLchar **)&(fragmentSource->string), NULL);
+	glShaderSource(fragShader, 1, (const GLchar **)&(sourceString), NULL);
 	glCompileShader(fragShader);
 	glGetShaderiv(fragShader, GL_INFO_LOG_LENGTH, &logLength);
 	if (logLength > 0) 
@@ -772,13 +788,15 @@ static GLsizei GetGLTypeSize(GLenum type)
 		free(log);
 	}
 	
-	
 	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &status);
 	if (status == 0)
 	{
-		NSLog(@"Failed to compile frag shader:\n%s\n", fragmentSource->string);
+		NSLog(@"Failed to compile frag shader:\n%s\n", sourceString);
 		return 0;
 	}
+	
+	free(sourceString);
+	sourceString = NULL;
 	
 	// Attach the fragment shader to our program
 	glAttachShader(prgName, fragShader);
@@ -879,8 +897,10 @@ static GLsizei GetGLTypeSize(GLenum type)
 
 - (id) initWithDefaultFBO: (GLuint) defaultFBOName
 {
-	if(self = [super init])
+	if((self = [super init]))
 	{
+		NSLog(@"%s %s", glGetString(GL_RENDERER), glGetString(GL_VERSION));
+		
 		////////////////////////////////////////////////////
 		// Build all of our and setup initial state here  //
 		// Don't wait until our real time run loop begins //
@@ -1054,7 +1074,7 @@ static GLsizei GetGLTypeSize(GLenum type)
 		// Depth test will always be enabled
 		glEnable(GL_DEPTH_TEST);
 	
-		// We will always cull back faces
+		// We will always cull back faces for better performance
 		glEnable(GL_CULL_FACE);
 		
 		// Always use this clear color

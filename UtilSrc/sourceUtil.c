@@ -1,7 +1,7 @@
 /*
-     File: sourceUitl.c
+     File: sourceUtil.c
  Abstract: Functions for loading source files for shaders.
-  Version: 1.0
+  Version: 1.1
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -54,7 +54,7 @@
 demoSource* srcLoadSource(const char* filepathname)
 {
 	demoSource* source = (demoSource*) calloc(sizeof(demoSource), 1);
-
+	
 	// Check the file name suffix to determine what type of shader this is
 	const char* suffixBegin = filepathname + strlen(filepathname) - 4;
 	
@@ -78,8 +78,8 @@ demoSource* srcLoadSource(const char* filepathname)
 	fseek(curFile, 0, SEEK_END);
 	GLsizei fileSize = ftell (curFile);
 	
-	// Add 1 to the file size to include the null terminator for th string
-   source->byteSize = fileSize + 1;
+	// Add 1 to the file size to include the null terminator for the string
+	source->byteSize = fileSize + 1;
 	
 	// Alloc memory for the string
 	source->string = malloc(source->byteSize);

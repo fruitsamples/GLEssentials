@@ -1,7 +1,7 @@
 /*
      File: reflect.fsh
  Abstract: The fragment shader for reflection rendering.
-  Version: 1.0
+  Version: 1.1
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -59,8 +59,14 @@ const vec4 tintColor = vec4(0.0, 0.0, 1.0, 1.0);
 // Amount of tint to apply
 const float tintFactor = 0.2;
 
+#if __VERSION__ >= 140
+in vec3       varNormal;
+in vec3       varEyeDir;
+out vec4      fragColor;
+#else
 varying vec3  varNormal;
 varying vec3  varEyeDir;
+#endif
 
 uniform sampler2D diffuseTexture;
 
@@ -89,9 +95,17 @@ void main (void)
     }
     
   
+	#if __VERSION__ >= 140
+	vec4 texColor = texture(diffuseTexture, texcoord);
+	#else
 	vec4 texColor = texture2D(diffuseTexture, texcoord);
+	#endif
 	  
     // Do a lookup into the environment map.
 
+	#if __VERSION__ >= 140
+	fragColor    = mix(texColor, tintColor, tintFactor);
+	#else
     gl_FragColor = mix(texColor, tintColor, tintFactor);
+	#endif
 }

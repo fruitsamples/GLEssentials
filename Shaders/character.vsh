@@ -1,7 +1,7 @@
 /*
      File: character.vsh
  Abstract: The vertex shader for character rendering.
-  Version: 1.0
+  Version: 1.1
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -49,11 +49,17 @@
 precision highp float;
 #endif
 
-uniform mat4 modelViewProjectionMatrix;   
+uniform mat4 modelViewProjectionMatrix;
+
+#if __VERSION__ >= 140
+in vec4  inPosition;  
+in vec2  inTexcoord;
+out vec2 varTexcoord;
+#else
+attribute vec4 inPosition;  
 attribute vec2 inTexcoord;
 varying vec2 varTexcoord;
-
-attribute vec4 inPosition;
+#endif
 
 void main (void) 
 {

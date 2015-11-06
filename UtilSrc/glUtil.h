@@ -1,7 +1,7 @@
 /*
      File: glUtil.h
  Abstract: Includes the appropriate OpenGL headers and provides some API utility functions
-  Version: 1.0
+  Version: 1.1
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -49,22 +49,48 @@
 #define __GL_UTIL_H__
 
 #if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
+
+#else 
+
+#import <OpenGL/OpenGL.h>
+
+// OpenGL 3.2 is only supported on MacOS X Lion and later
+// CGL_VERSION_1_3 is defined as 1 on MacOS X Lion and later
+#if CGL_VERSION_1_3
+// Set to 0 to run on the Legacy OpenGL Profile
+#define ESSENTIAL_GL_PRACTICES_SUPPORT_GL3 1
+#else
+#define ESSENTIAL_GL_PRACTICES_SUPPORT_GL3 0
+#endif //!CGL_VERSION_1_3
+
+#if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
+#import <OpenGL/gl3.h>
 #else
 #import <OpenGL/gl.h>
-#endif
+#endif //!ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
+
+#endif // !ESSENTIAL_GL_PRACTICES_IPHONE_OS
 
 #if ESSENTIAL_GL_PRACTICES_IPHONE_OS
 #define glBindVertexArray glBindVertexArrayOES
 #define glGenVertexArrays glGenVertexArraysOES
 #define glDeleteVertexArrays glDeleteVertexArraysOES
 #else
+#if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
+#define glBindVertexArray glBindVertexArray
+#define glGenVertexArrays glGenVertexArrays
+#define glGenerateMipmap glGenerateMipmap
+#define glDeleteVertexArrays glDeleteVertexArrays
+#else
 #define glBindVertexArray glBindVertexArrayAPPLE 
 #define glGenVertexArrays glGenVertexArraysAPPLE
 #define glGenerateMipmap glGenerateMipmapEXT
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
-#endif
+#endif //!ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
+#endif //!ESSENTIAL_GL_PRACTICES_IPHONE_OS
 
 static inline const char * GetGLErrorString(GLenum error)
 {
@@ -82,24 +108,24 @@ static inline const char * GetGLErrorString(GLenum error)
 			break;
 		case GL_INVALID_OPERATION:
 			str = "GL_INVALID_OPERATION";
-			break;			
-#ifdef __gl_h_
+			break;		
+#if defined __gl_h_ || defined __gl3_h_
+		case GL_OUT_OF_MEMORY:
+			str = "GL_OUT_OF_MEMORY";
+			break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			str = "GL_INVALID_FRAMEBUFFER_OPERATION";
+			break;
+#endif
+#if defined __gl_h_
 		case GL_STACK_OVERFLOW:
 			str = "GL_STACK_OVERFLOW";
 			break;
 		case GL_STACK_UNDERFLOW:
 			str = "GL_STACK_UNDERFLOW";
 			break;
-		case GL_OUT_OF_MEMORY:
-			str = "GL_OUT_OF_MEMORY";
-			break;
 		case GL_TABLE_TOO_LARGE:
 			str = "GL_TABLE_TOO_LARGE";
-			break;
-#endif
-#if GL_EXT_framebuffer_object
-		case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
-			str = "GL_INVALID_FRAMEBUFFER_OPERATION_EXT";
 			break;
 #endif
 		default:

@@ -127,13 +127,13 @@
 			isa = PBXGroup;
 			children = (
 				3AE9119612CAF36A005ED635 /* sourceUtil.c */,
-				3A609E4B11B9DB7700AA4C48 /* vectorUtil.h */,
-				3A609E4C11B9DB7700AA4C48 /* vectorUtil.c */,
 				3A609E4D11B9DB7700AA4C48 /* sourceUtil.h */,
-				3A609E4F11B9DB7700AA4C48 /* modelUtil.h */,
+				3A609E4C11B9DB7700AA4C48 /* vectorUtil.c */,
+				3A609E4B11B9DB7700AA4C48 /* vectorUtil.h */,
 				3A609E5011B9DB7700AA4C48 /* modelUtil.c */,
-				3A609E5111B9DB7700AA4C48 /* matrixUtil.h */,
+				3A609E4F11B9DB7700AA4C48 /* modelUtil.h */,
 				3A609E5211B9DB7700AA4C48 /* matrixUtil.c */,
+				3A609E5111B9DB7700AA4C48 /* matrixUtil.h */,
 				3A609E5311B9DB7700AA4C48 /* imageUtil.m */,
 				3A609E5411B9DB7700AA4C48 /* imageUtil.h */,
 				3A609E5511B9DB7700AA4C48 /* glUtil.h */,
@@ -298,7 +298,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				PREBINDING = NO;
-				SDKROOT = iphoneos4.2;
+				SDKROOT = iphoneos;
 			};
 			name = Debug;
 		};
@@ -313,7 +313,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PREBINDING = NO;
-				SDKROOT = iphoneos4.2;
+				SDKROOT = iphoneos;
 			};
 			name = Release;
 		};

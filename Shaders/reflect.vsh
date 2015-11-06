@@ -1,7 +1,7 @@
 /*
      File: reflect.vsh
  Abstract: The vertex shader for reflection rendering.
-  Version: 1.0
+  Version: 1.1
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -53,13 +53,17 @@ uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat3 normalMatrix;   
 
+#if __VERSION__ >= 140
+in vec3  inNormal;
+in vec4  inPosition;
+out vec3 varNormal;
+out vec3 varEyeDir;
+#else
 attribute vec3 inNormal;
-
 attribute vec4 inPosition;
-
 varying vec3  varNormal;
 varying vec3  varEyeDir;
-
+#endif
 
 void main (void)
 {	
