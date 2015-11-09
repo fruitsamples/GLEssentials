@@ -19,14 +19,14 @@ context on Mac OS X Lion.
 BUILD REQUIREMENTS:
 
 Mac version: Mac OS X v10.6 or later, Xcode 3.1 or later
-iPhone version: iOS SDK 4.0 or later
+iOS version: iOS SDK 4.0 or later
 
 ================================================================================
 RUNTIME REQUIREMENTS:
 
 Mac version: Mac OS X v10.6 or later
 Mac version: Mac OS X Lion or later to use OpenGL 3.2
-iPhone version: iOS 4.0 or later (with OpenGL ES 2.0 support) 
+iOS version: iOS 4.0 or later (with OpenGL ES 2.0 support) 
 
 ================================================================================
 Copyright (C) 2010~2011 Apple Inc. All rights reserved.

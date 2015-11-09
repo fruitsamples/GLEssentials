@@ -1,7 +1,7 @@
 /*
- File: imageUtil.m
- Abstract: Functions for loading an image file for textures.
- Version: 1.0
+     File: EAGLView.h
+ Abstract: The EAGLView class is a UIView subclass that renders OpenGL scene.
+  Version: 1.0
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
  Inc. ("Apple") in consideration of your agreement to the following
@@ -45,70 +45,36 @@
  
  */
 
-#include "imageUtil.h"
-
-#if ESSENTIAL_GL_PRACTICES_IOS
 #import <UIKit/UIKit.h>
-#else
-#import <Cocoa/Cocoa.h>
-#endif
 
-demoImage* imgLoadImage(const char* filepathname, int flipVertical)
-{
-	NSString *filepathString = [[NSString alloc] initWithUTF8String:filepathname];
+#import "ES2Renderer.h"
+
+// This class wraps the CAEAGLLayer from CoreAnimation into a convenient UIView subclass.
+// The view content is basically an EAGL surface you render your OpenGL scene into.
+// Note that setting the view non-opaque will only work if the EAGL surface has an alpha channel.
+@interface EAGLView : UIView
+{    
+@private
+	ES2Renderer *m_renderer;
 	
-#if ESSENTIAL_GL_PRACTICES_IOS
-	UIImage* imageClass = [[UIImage alloc] initWithContentsOfFile:filepathString];
-#else   
-    NSImage *nsimage = [[NSImage alloc] initWithContentsOfFile: filepathString];
+	EAGLContext *m_context;
 	
-	NSBitmapImageRep *imageClass = [[NSBitmapImageRep alloc] initWithData:[nsimage TIFFRepresentation]];
-	[nsimage release];
-#endif
-	
-	CGImageRef cgImage = imageClass.CGImage;
-	if (!cgImage)
-	{ 
-		[filepathString release];
-		[imageClass release];
-		return NULL;
-	}
-	
-	demoImage* image = malloc(sizeof(demoImage));
-	image->width = CGImageGetWidth(cgImage);
-	image->height = CGImageGetHeight(cgImage);
-	image->rowByteSize = image->width * 4;
-	image->data = malloc(image->height * image->rowByteSize);
-	image->format = GL_RGBA;
-	image->type = GL_UNSIGNED_BYTE;
-	
-	CGContextRef context = CGBitmapContextCreate(image->data, image->width, image->height, 8, image->rowByteSize, CGImageGetColorSpace(cgImage), kCGImageAlphaNoneSkipLast);
-	CGContextSetBlendMode(context, kCGBlendModeCopy);
-	if(flipVertical)
-	{
-		CGContextTranslateCTM(context, 0.0, image->height);
-		CGContextScaleCTM(context, 1.0, -1.0);
-	}
-	CGContextDrawImage(context, CGRectMake(0.0, 0.0, image->width, image->height), cgImage);
-	CGContextRelease(context);
-	
-	if(NULL == image->data)
-	{
-		[filepathString release];
-		[imageClass release];
-		
-		imgDestroyImage(image);
-		return NULL;
-	}
-	
-	[filepathString release];
-	[imageClass release];	
-	
-	return image;
+	BOOL animating;
+	BOOL displayLinkSupported;
+	NSInteger animationFrameInterval;
+	// Use of the CADisplayLink class is the preferred method for controlling your animation timing.
+	// CADisplayLink will link to the main display and fire every vsync when added to a given run-loop.
+	// The NSTimer class is used only as fallback when running on a pre 3.1 device where CADisplayLink
+	// isn't available.
+	id displayLink;
+    NSTimer *animationTimer;
 }
 
-void imgDestroyImage(demoImage* image)
-{
-	free(image->data);
-	free(image);
-}
+@property (readonly, nonatomic, getter=isAnimating) BOOL animating;
+@property (nonatomic) NSInteger animationFrameInterval;
+
+- (void) startAnimation;
+- (void) stopAnimation;
+- (void) drawView:(id)sender;
+
+@end

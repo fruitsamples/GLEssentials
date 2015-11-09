@@ -45,7 +45,7 @@
  
  */
 
-#if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#if ESSENTIAL_GL_PRACTICES_IOS
 #import <UIKit/UIKit.h>
 #else
 #import <Cocoa/Cocoa.h>
@@ -54,7 +54,7 @@
 int main(int argc, char *argv[])
 {
 	int retVal = 1;
-#if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#if ESSENTIAL_GL_PRACTICES_IOS
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
     retVal = UIApplicationMain(argc, argv, nil, nil);
     [pool release];

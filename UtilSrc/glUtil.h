@@ -48,7 +48,7 @@
 #ifndef __GL_UTIL_H__
 #define __GL_UTIL_H__
 
-#if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#if ESSENTIAL_GL_PRACTICES_IOS
 
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
@@ -72,9 +72,13 @@
 #import <OpenGL/gl.h>
 #endif //!ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
 
-#endif // !ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#endif // !ESSENTIAL_GL_PRACTICES_IOS
 
-#if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+
+//The name of the VertexArrayObject are slightly different in
+// OpenGLES, OpenGL Core Profile, and OpenGL Legacy
+// The arguments are exactly the same across these APIs however
+#if ESSENTIAL_GL_PRACTICES_IOS
 #define glBindVertexArray glBindVertexArrayOES
 #define glGenVertexArrays glGenVertexArraysOES
 #define glDeleteVertexArrays glDeleteVertexArraysOES
@@ -90,7 +94,7 @@
 #define glGenerateMipmap glGenerateMipmapEXT
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #endif //!ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
-#endif //!ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#endif //!ESSENTIAL_GL_PRACTICES_IOS
 
 static inline const char * GetGLErrorString(GLenum error)
 {

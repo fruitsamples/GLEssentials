@@ -66,6 +66,7 @@
 
 // Toggle this to disable vertex buffer objects
 // (i.e. use client-side vertex array objects)
+// This must be 1 if using the GL3 Core Profile on the Mac
 #define USE_VERTEX_BUFFER_OBJECTS 1
 
 // Toggle this to disable the rendering the reflection
@@ -86,49 +87,46 @@ enum {
 
 @implementation OpenGLRenderer
 
-GLuint _defaultFBOName;
-
-
 #if RENDER_REFLECTION
-demoModel* _quadModel;
-GLenum _quadPrimType;
-GLenum _quadElementType;
-GLuint _quadNumElements;
-GLuint _reflectVAOName;
-GLuint _reflectTexName;
-GLuint _reflectFBOName;
-GLuint _reflectWidth;
-GLuint _reflectHeight;
-GLuint _reflectPrgName;
-GLint  _reflectModelViewUniformIdx;
-GLint  _reflectProjectionUniformIdx;
-GLint _reflectNormalMatrixUniformIdx;
+demoModel* m_quadModel;
+GLenum m_quadPrimType;
+GLenum m_quadElementType;
+GLuint m_quadNumElements;
+GLuint m_reflectVAOName;
+GLuint m_reflectTexName;
+GLuint m_reflectFBOName;
+GLuint m_reflectWidth;
+GLuint m_reflectHeight;
+GLuint m_reflectPrgName;
+GLint  m_reflectModelViewUniformIdx;
+GLint  m_reflectProjectionUniformIdx;
+GLint m_reflectNormalMatrixUniformIdx;
 #endif // RENDER_REFLECTION
 
 
-GLuint _characterPrgName;
-GLint _characterMvpUniformIdx;
-GLuint _characterVAOName;
-GLuint _characterTexName;
-demoModel* _characterModel;
-GLenum _characterPrimType;
-GLenum _characterElementType;
-GLuint _characterNumElements;
-GLfloat _characterAngle;
+GLuint m_characterPrgName;
+GLint m_characterMvpUniformIdx;
+GLuint m_characterVAOName;
+GLuint m_characterTexName;
+demoModel* m_characterModel;
+GLenum m_characterPrimType;
+GLenum m_characterElementType;
+GLuint m_characterNumElements;
+GLfloat m_characterAngle;
 
 
-GLuint _viewWidth;
-GLuint _viewHeight;
+GLuint m_viewWidth;
+GLuint m_viewHeight;
 
 
-GLboolean _useVBOs;
+GLboolean m_useVBOs;
 
 - (void) resizeWithWidth:(GLuint)width AndHeight:(GLuint)height
 {
 	glViewport(0, 0, width, height);
 	
-	_viewWidth = width;
-	_viewHeight = height;
+	m_viewWidth = width;
+	m_viewHeight = height;
 	
 }
 
@@ -143,13 +141,13 @@ GLboolean _useVBOs;
 	
 	// Bind our refletion FBO and render our scene
 	
-	glBindFramebuffer(GL_FRAMEBUFFER, _reflectFBOName);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_reflectFBOName);
 	
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glViewport(0, 0, _reflectWidth, _reflectHeight);
+	glViewport(0, 0, m_reflectWidth, m_reflectHeight);
 	
-	mtxLoadPerspective(projection, 90, (float)_reflectWidth / (float)_reflectHeight,5.0,10000);
+	mtxLoadPerspective(projection, 90, (float)m_reflectWidth / (float)m_reflectHeight,5.0,10000);
 
 	mtxLoadIdentity(modelView);
 	
@@ -159,89 +157,89 @@ GLboolean _useVBOs;
 	mtxScaleApply(modelView, 1, -1, 1);
 	mtxTranslateApply(modelView, 0, 300, -800);
 	mtxRotateXApply(modelView, -90.0f);	
-	mtxRotateApply(modelView, _characterAngle, 0.7, 0.3, 1);	
+	mtxRotateApply(modelView, m_characterAngle, 0.7, 0.3, 1);	
 	
 	mtxMultiply(mvp, projection, modelView);
 	
 	// Use the program that we previously created
-	glUseProgram(_characterPrgName);
+	glUseProgram(m_characterPrgName);
 	
 	// Set the modelview projection matrix that we calculated above
 	// in our vertex shader
-	glUniformMatrix4fv(_characterMvpUniformIdx, 1, GL_FALSE, mvp);
+	glUniformMatrix4fv(m_characterMvpUniformIdx, 1, GL_FALSE, mvp);
 	
 	// Bind our vertex array object
-	glBindVertexArray(_characterVAOName);
+	glBindVertexArray(m_characterVAOName);
 	
 	// Bind the texture to be used
-	glBindTexture(GL_TEXTURE_2D, _characterTexName);
+	glBindTexture(GL_TEXTURE_2D, m_characterTexName);
 	
 	// Cull front faces now that everything is flipped 
 	// with our inverted reflection transformation matrix
 	glCullFace(GL_FRONT);
 	
 	// Draw our object
-	if(_useVBOs)
+	if(m_useVBOs)
 	{
-		glDrawElements(GL_TRIANGLES, _characterNumElements, _characterElementType, 0);
+		glDrawElements(GL_TRIANGLES, m_characterNumElements, m_characterElementType, 0);
 	}
 	else 
 	{
-		glDrawElements(GL_TRIANGLES, _characterNumElements, _characterElementType, _characterModel->elements);
+		glDrawElements(GL_TRIANGLES, m_characterNumElements, m_characterElementType, m_characterModel->elements);
 	}
 	
 	// Bind our default FBO to render to the screen
-	glBindFramebuffer(GL_FRAMEBUFFER, _defaultFBOName);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBOName);
 
-	glViewport(0, 0, _viewWidth, _viewHeight);
+	glViewport(0, 0, m_viewWidth, m_viewHeight);
 	
 #endif // RENDER_REFLECTION
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	// Use the program for rendering our character
-	glUseProgram(_characterPrgName);
+	glUseProgram(m_characterPrgName);
 	
 	// Calculate the projection matrix
-	mtxLoadPerspective(projection, 90, (float)_viewWidth / (float)_viewHeight,5.0,10000);
+	mtxLoadPerspective(projection, 90, (float)m_viewWidth / (float)m_viewHeight,5.0,10000);
 	
 	// Calculate the modelview matrix to render our character 
 	//  at the proper position and rotation
 	mtxLoadTranslate(modelView, 0, 150, -450);
 	mtxRotateXApply(modelView, -90.0f);	
-	mtxRotateApply(modelView, _characterAngle, 0.7, 0.3, 1);
+	mtxRotateApply(modelView, m_characterAngle, 0.7, 0.3, 1);
 	
 	// Multiply the modelview and projection matrix and set it in the shader
 	mtxMultiply(mvp, projection, modelView);
 	
 	// Have our shader use the modelview projection matrix 
 	// that we calculated above
-	glUniformMatrix4fv(_characterMvpUniformIdx, 1, GL_FALSE, mvp);
+	glUniformMatrix4fv(m_characterMvpUniformIdx, 1, GL_FALSE, mvp);
 	
 	// Bind the texture to be used
-	glBindTexture(GL_TEXTURE_2D, _characterTexName);
+	glBindTexture(GL_TEXTURE_2D, m_characterTexName);
 	
 	// Bind our vertex array object
-	glBindVertexArray(_characterVAOName);
+	glBindVertexArray(m_characterVAOName);
 	
 	// Cull back faces now that we no longer render 
 	// with an inverted matrix
 	glCullFace(GL_BACK);
 	
 	// Draw our character
-	if(_useVBOs)
+	if(m_useVBOs)
 	{
-		glDrawElements(GL_TRIANGLES, _characterNumElements, _characterElementType, 0);
+		glDrawElements(GL_TRIANGLES, m_characterNumElements, m_characterElementType, 0);
 	}
 	else 
 	{
-		glDrawElements(GL_TRIANGLES, _characterNumElements, _characterElementType, _characterModel->elements);
+		glDrawElements(GL_TRIANGLES, m_characterNumElements, m_characterElementType, m_characterModel->elements);
 	}
 	
 #if RENDER_REFLECTION
 	
 	// Use our shader for reflections
-	glUseProgram(_reflectPrgName);
+	glUseProgram(m_reflectPrgName);
 	
 	mtxLoadTranslate(modelView, 0, -50, -250);
 	
@@ -250,11 +248,11 @@ GLboolean _useVBOs;
 	
 	// Set the modelview matrix that we calculated above
 	// in our vertex shader
-	glUniformMatrix4fv(_reflectModelViewUniformIdx, 1, GL_FALSE, modelView);
+	glUniformMatrix4fv(m_reflectModelViewUniformIdx, 1, GL_FALSE, modelView);
 	
 	// Set the projection matrix that we calculated above
 	// in our vertex shader
-	glUniformMatrix4fv(_reflectProjectionUniformIdx, 1, GL_FALSE, mvp);
+	glUniformMatrix4fv(m_reflectProjectionUniformIdx, 1, GL_FALSE, mvp);
 	
 	float normalMatrix[9];
 	
@@ -269,12 +267,12 @@ GLboolean _useVBOs;
 	mtx3x3FromTopLeftOf4x4(normalMatrix, modelView);
 	
 	// Set the normal matrix for our shader to use
-	glUniformMatrix3fv(_reflectNormalMatrixUniformIdx, 1, GL_FALSE, normalMatrix);
+	glUniformMatrix3fv(m_reflectNormalMatrixUniformIdx, 1, GL_FALSE, normalMatrix);
 		
 	// Bind the texture we rendered-to above (i.e. the reflection texture)
-	glBindTexture(GL_TEXTURE_2D, _reflectTexName);
+	glBindTexture(GL_TEXTURE_2D, m_reflectTexName);
 
-#if !ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#if !ESSENTIAL_GL_PRACTICES_IOS
 	// Generate mipmaps from the rendered-to base level
 	//   Mipmaps reduce shimmering pixels due to better filtering
 	// This call is not accelarated on iOS 4 so do not use
@@ -283,21 +281,21 @@ GLboolean _useVBOs;
 #endif
 	
 	// Bind our vertex array object
-	glBindVertexArray(_reflectVAOName);
+	glBindVertexArray(m_reflectVAOName);
 	
 	// Draw our refection plane
-	if(_useVBOs)
+	if(m_useVBOs)
 	{
-		glDrawElements(GL_TRIANGLES, _quadNumElements, _quadElementType, 0);
+		glDrawElements(GL_TRIANGLES, m_quadNumElements, m_quadElementType, 0);
 	}
 	else 
 	{
-		glDrawElements(GL_TRIANGLES, _quadNumElements, _quadElementType, _quadModel->elements);
+		glDrawElements(GL_TRIANGLES, m_quadNumElements, m_quadElementType, m_quadModel->elements);
 	}
 #endif // RENDER_REFLECTION
 	
 	// Update the angle so our character keeps spinning
-	_characterAngle++;
+	m_characterAngle++;
 }
 
 static GLsizei GetGLTypeSize(GLenum type)
@@ -330,7 +328,7 @@ static GLsizei GetGLTypeSize(GLenum type)
 	glGenVertexArrays(1, &vaoName);
 	glBindVertexArray(vaoName);
 	
-	if(_useVBOs)
+	if(m_useVBOs)
 	{
 		GLuint posBufferName;
 		
@@ -605,7 +603,7 @@ static GLsizei GetGLTypeSize(GLenum type)
 	// OpenGL ES on iOS 4 has only 1 attachment. 
 	// There are many possible attachments on OpenGL 
 	// on MacOSX so we query how many below
-	#if !ESSENTIAL_GL_PRACTICES_IPHONE_OS
+	#if !ESSENTIAL_GL_PRACTICES_IOS
 	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
 	#endif
 	
@@ -642,7 +640,7 @@ static GLsizei GetGLTypeSize(GLenum type)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#if ESSENTIAL_GL_PRACTICES_IOS
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 #else
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -692,7 +690,7 @@ static GLsizei GetGLTypeSize(GLenum type)
 	//  with the proper version preprocessor string prepended
 	float  glLanguageVersion;
 	
-#if ESSENTIAL_GL_PRACTICES_IPHONE_OS
+#if ESSENTIAL_GL_PRACTICES_IOS
 	sscanf((char *)glGetString(GL_SHADING_LANGUAGE_VERSION), "OpenGL ES GLSL ES %f", &glLanguageVersion);
 #else
 	sscanf((char *)glGetString(GL_SHADING_LANGUAGE_VERSION), "%f", &glLanguageVersion);	
@@ -906,15 +904,15 @@ static GLsizei GetGLTypeSize(GLenum type)
 		// Don't wait until our real time run loop begins //
 		////////////////////////////////////////////////////
 		
-		_defaultFBOName = defaultFBOName;
+		m_defaultFBOName = defaultFBOName;
 		
-		_viewWidth = 100;
-		_viewHeight = 100;
+		m_viewWidth = 100;
+		m_viewHeight = 100;
 		
 		
-		_characterAngle = 0;
+		m_characterAngle = 0;
 		
-		_useVBOs = USE_VERTEX_BUFFER_OBJECTS;
+		m_useVBOs = USE_VERTEX_BUFFER_OBJECTS;
 		
 		NSString* filePathName = nil;
 
@@ -923,22 +921,22 @@ static GLsizei GetGLTypeSize(GLenum type)
 		//////////////////////////////
 		
 		filePathName = [[NSBundle mainBundle] pathForResource:@"demon" ofType:@"model"];
-		_characterModel = mdlLoadModel([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
+		m_characterModel = mdlLoadModel([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
 		
 		// Build Vertex Buffer Objects (VBOs) and Vertex Array Object (VAOs) with our model data
-		_characterVAOName = [self buildVAO:_characterModel];
+		m_characterVAOName = [self buildVAO:m_characterModel];
 		
 		// Cache the number of element and primType to use later in our glDrawElements calls
-		_characterNumElements = _characterModel->numElements;
-		_characterPrimType = _characterModel->primType;
-		_characterElementType = _characterModel->elementType;
+		m_characterNumElements = m_characterModel->numElements;
+		m_characterPrimType = m_characterModel->primType;
+		m_characterElementType = m_characterModel->elementType;
 
-		if(_useVBOs)
+		if(m_useVBOs)
 		{
 			//If we're using VBOs we can destroy all this memory since buffers are
 			// loaded into GL and we've saved anything else we need
-			mdlDestroyModel(_characterModel);
-			_characterModel = NULL;
+			mdlDestroyModel(m_characterModel);
+			m_characterModel = NULL;
 		}
 	
 		
@@ -950,7 +948,7 @@ static GLsizei GetGLTypeSize(GLenum type)
 		demoImage *image = imgLoadImage([filePathName cStringUsingEncoding:NSASCIIStringEncoding], false);
 		
 		// Build a texture object with our image data
-		_characterTexName = [self buildTexture:image];
+		m_characterTexName = [self buildTexture:image];
 		
 		// We can destroy the image once it's loaded into GL
 		imgDestroyImage(image);
@@ -970,15 +968,15 @@ static GLsizei GetGLTypeSize(GLenum type)
 		frgSource = srcLoadSource([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
 		
 		// Build Program
-		_characterPrgName = [self buildProgramWithVertexSource:vtxSource withFragmentSource:frgSource
+		m_characterPrgName = [self buildProgramWithVertexSource:vtxSource withFragmentSource:frgSource
 													withNormal:NO withTexcoord:YES];
 		
 		srcDestroySource(vtxSource);
 		srcDestroySource(frgSource);
 		
-		_characterMvpUniformIdx = glGetUniformLocation(_characterPrgName, "modelViewProjectionMatrix");
+		m_characterMvpUniformIdx = glGetUniformLocation(m_characterPrgName, "modelViewProjectionMatrix");
 		
-		if(_characterMvpUniformIdx < 0)
+		if(m_characterMvpUniformIdx < 0)
 		{
 			NSLog(@"No modelViewProjectionMatrix in character shader");
 		}
@@ -986,39 +984,39 @@ static GLsizei GetGLTypeSize(GLenum type)
 		
 #if RENDER_REFLECTION
 		
-		_reflectWidth = 512;
-		_reflectHeight = 512;
+		m_reflectWidth = 512;
+		m_reflectHeight = 512;
 		
 		////////////////////////////////////////////////
 		// Load a model for a quad for the reflection //
 		////////////////////////////////////////////////
 		
-		_quadModel = mdlLoadQuadModel();
+		m_quadModel = mdlLoadQuadModel();
 		// Build Vertex Buffer Objects (VBOs) and Vertex Array Object (VAOs) with our model data
-		_reflectVAOName = [self buildVAO:_quadModel];
+		m_reflectVAOName = [self buildVAO:m_quadModel];
 		
 		// Cache the number of element and primType to use later in our glDrawElements calls
-		_quadNumElements = _quadModel->numElements;
-		_quadPrimType    = _quadModel->primType;
-		_quadElementType = _quadModel->elementType;
+		m_quadNumElements = m_quadModel->numElements;
+		m_quadPrimType    = m_quadModel->primType;
+		m_quadElementType = m_quadModel->elementType;
 		
-		if(_useVBOs)
+		if(m_useVBOs)
 		{
 			//If we're using VBOs we can destroy all this memory since buffers are
 			// loaded into GL and we've saved anything else we need 
-			mdlDestroyModel(_quadModel);
-			_quadModel = NULL;
+			mdlDestroyModel(m_quadModel);
+			m_quadModel = NULL;
 		}
 		
 		/////////////////////////////////////////////////////
 		// Create texture and FBO for reflection rendering //
 		/////////////////////////////////////////////////////
 		
-		_reflectFBOName = [self buildFBOWithWidth:_reflectWidth andHeight:_reflectHeight];
+		m_reflectFBOName = [self buildFBOWithWidth:m_reflectWidth andHeight:m_reflectHeight];
 		
 		// Get the texture we created in buildReflectFBO by binding the 
 		// reflection FBO and getting the buffer attached to color 0
-		glBindFramebuffer(GL_FRAMEBUFFER, _reflectFBOName);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_reflectFBOName);
 		
 		GLint iReflectTexName;
 		
@@ -1026,7 +1024,7 @@ static GLsizei GetGLTypeSize(GLenum type)
                                               GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
                                               &iReflectTexName);
 		
-		_reflectTexName = ((GLuint*)(&iReflectTexName))[0];
+		m_reflectTexName = ((GLuint*)(&iReflectTexName))[0];
 		
 		/////////////////////////////////////////////////////
 		// Load and setup shaders for reflection rendering //
@@ -1039,29 +1037,29 @@ static GLsizei GetGLTypeSize(GLenum type)
 		frgSource = srcLoadSource([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
 		
 		// Build Program
-		_reflectPrgName = [self buildProgramWithVertexSource:vtxSource withFragmentSource:frgSource
+		m_reflectPrgName = [self buildProgramWithVertexSource:vtxSource withFragmentSource:frgSource
 												  withNormal:YES withTexcoord:NO];
 		
 		srcDestroySource(vtxSource);
 		srcDestroySource(frgSource);
 		
-		_reflectModelViewUniformIdx = glGetUniformLocation(_reflectPrgName, "modelViewMatrix");
+		m_reflectModelViewUniformIdx = glGetUniformLocation(m_reflectPrgName, "modelViewMatrix");
 		
-		if(_reflectModelViewUniformIdx < 0)
+		if(m_reflectModelViewUniformIdx < 0)
 		{
 			NSLog(@"No modelViewMatrix in reflection shader");
 		}
 		
-		_reflectProjectionUniformIdx = glGetUniformLocation(_reflectPrgName, "modelViewProjectionMatrix");
+		m_reflectProjectionUniformIdx = glGetUniformLocation(m_reflectPrgName, "modelViewProjectionMatrix");
 		
-		if(_reflectProjectionUniformIdx < 0)
+		if(m_reflectProjectionUniformIdx < 0)
 		{
 			NSLog(@"No modelViewProjectionMatrix in reflection shader");
 		}
 		
-		_reflectNormalMatrixUniformIdx = glGetUniformLocation(_reflectPrgName, "normalMatrix");
+		m_reflectNormalMatrixUniformIdx = glGetUniformLocation(m_reflectPrgName, "normalMatrix");
 		
-		if(_reflectNormalMatrixUniformIdx < 0)
+		if(m_reflectNormalMatrixUniformIdx < 0)
 		{
 			NSLog(@"No normalMatrix in reflection shader");
 		}
@@ -1086,8 +1084,8 @@ static GLsizei GetGLTypeSize(GLenum type)
 		//   user to see this, we're only drawing as a pre-warm stage
 		[self render];
 		
-		// Reset the _characterAngle which is incremented in render
-		_characterAngle = 0;
+		// Reset the m_characterAngle which is incremented in render
+		m_characterAngle = 0;
 		
 		// Check for errors to make sure all of our setup went ok
 		GetGLError();
@@ -1101,22 +1099,22 @@ static GLsizei GetGLTypeSize(GLenum type)
 {
 	
 	// Cleanup all OpenGL objects and 
-	glDeleteTextures(1, &_characterTexName);
+	glDeleteTextures(1, &m_characterTexName);
 		
-	[self destroyVAO:_characterVAOName];
+	[self destroyVAO:m_characterVAOName];
 	
-	[self destroyProgram:_characterPrgName];
+	[self destroyProgram:m_characterPrgName];
 	
-	mdlDestroyModel(_characterModel);
+	mdlDestroyModel(m_characterModel);
 
 #if RENDER_REFLECTION
-	[self destroyFBO:_reflectFBOName];
+	[self destroyFBO:m_reflectFBOName];
 	
-	[self destroyVAO:_reflectVAOName];
+	[self destroyVAO:m_reflectVAOName];
 	
-	[self destroyProgram:_reflectPrgName];
+	[self destroyProgram:m_reflectPrgName];
 	
-	mdlDestroyModel(_quadModel);
+	mdlDestroyModel(m_quadModel);
 #endif // RENDER_REFLECTION
 	
 	[super dealloc];	

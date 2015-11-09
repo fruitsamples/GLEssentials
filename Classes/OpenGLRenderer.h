@@ -49,7 +49,8 @@
 
 @interface OpenGLRenderer : NSObject {
 	
-	GLuint _defaultFBOName;
+	GLuint m_defaultFBOName;
+
 }
 
 - (id) initWithDefaultFBO: (GLuint) defaultFBOName;
